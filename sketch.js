@@ -1,5 +1,5 @@
 //Create variables here
-var dog, database, foodstock, foods;
+var dog, database, foodstock, foods, fed, addfood, fedTime, foodobj;
 
 function preload()
 {
@@ -10,61 +10,92 @@ function preload()
 }
 
 function setup() {
-	createCanvas(600, 500);
+	createCanvas(800, 500);
   
   database = firebase.database();
-  console.log(database);
-   dog = createSprite(410,350,50,50);
+
+   dog = createSprite(710,350,50,50);
    dog.addImage("dog",dog1);
    dog.scale = 0.2; 
 
   foodstock = database.ref('Food');
   foodstock.on("value",readStock);
-}
 
+  fed = createButton("Feed the Dog");
+  fed.position(700,95);
+  fed.mousePressed(writeStock);
+  fed.mouseReleased(changedog);
+
+  addfood = createButton("Add Food");
+  addfood.position(800,95);
+  addfood.mousePressed(addStock);
+
+  foodobj = new Food();
+}
 
 function draw() {  
   background(bg);
 
-if (keyWentDown("up")) {
-
-  writeStock(foods);
-  dog.addImage("happy",dog2)
-  dog.changeImage("happy");
-}
-if (keyWentUp("up")) {
-
-  dog.changeImage("dog");
-}
-
   drawSprites();
 
-  textSize(20);
-  fill("black");
-  text("Press Up Arrow key to feed Drago food",100,20);
+  fill(0);
+  textSize(15);
 
-  if (foods!=undefined) {
+if(fedTime){
+
+  if (fedTime>=12) {
     
-    fill("white")
-    text("Food Remaining : "+foods,210,250)
-  }
-}
-function writeStock(x) {
-  
-  if (x<=0) {
-    
-    x=0;
+    text("Last Feed : "+fedTime%12 + "PM",350,50);
+  }else if(fedTime==0){
+
+    text("Last Feed : 12 AM",350,50);
   }else{
 
-    x=x-1;
+    text("Last Feed : "+ fedTime + "AM",350,50);
+  }
+}
+
+  foodobj.display();
+}
+function writeStock() {
+  
+  if (foods<=0) {
+    
+    foods=0;
+  }else{
+
+    foods=foods-1;
+    fedTime = hour();
   }
 
    database.ref('/').update({
-     Food: x
+
+     Food: foods,
+     FedTime: fedTime
    })
+   if (foods>0) {
+     
+    dog.addImage("happy",dog2)
+    dog.changeImage("happy");
+   }
+}
+function changedog() {
+  
+  dog.changeImage("dog");
 }
 
 function readStock(data){
 
   foods = data.val();
+}
+function addStock() {
+
+  if (foods<20) {
+
+     foods=foods+1;
+  }
+
+   database.ref('/').update({
+     Food: foods
+   })
 }
